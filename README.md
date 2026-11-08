@@ -52,7 +52,7 @@ En el notebook `ComfyUI_Cloud_Studio.ipynb`, la Celda 2 ahora es ultraligera:
 #@title 2. Workflow Presets Catalog & Smart Downloader
 import os, sys
 
-REPO_URL = "https://github.com/TU_USUARIO/comfyui-cloud-studio.git"
+REPO_URL = "https://github.com/cchrrisppatrickk/comfyui-cloud-studio.git"
 REPO_DIR = "/content/comfyui-cloud-studio"
 
 if not os.path.exists(REPO_DIR):
