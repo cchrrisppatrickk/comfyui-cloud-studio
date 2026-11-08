@@ -1,0 +1,34 @@
+{
+  "id": "anima-base-v1",
+  "family": "🌸 Anima (CircleStone Labs)",
+  "title": "Anima Base v1.0 (Modelo Oficial / Base Original)",
+  "version": "v1.0 Base Oficial",
+  "author": "CircleStone Labs",
+  "base_model": "Anima Base v1.0",
+  "source_url": "https://huggingface.co/circlestone-labs/Anima",
+  "source_type": "Hugging Face (Oficial)",
+  "category": "Anime / Foundation Model",
+  "recommended_vram": "16GB+ (BF16 Nativo)",
+  "description": "El modelo base oficial de Anima v1.0 desarrollado por CircleStone Labs (4.18 GB). Es la arquitectura fundacional de la que derivan modelos afinados como Kirazuri. Proporciona una base sumamente versátil para generación de arte anime y manga sin sesgos de finetuning agresivo.",
+  "parameters": {
+    "steps": "25 - 35",
+    "cfg": "5.0 - 6.5",
+    "sampler": "Euler",
+    "scheduler": "Simple"
+  },
+  "models": {
+    "diffusion_models/anima": [
+      "https://huggingface.co/circlestone-labs/Anima/resolve/main/split_files/diffusion_models/anima-base-v1.0.safetensors"
+    ],
+    "text_encoders": [
+      "https://huggingface.co/circlestone-labs/Anima/resolve/main/split_files/text_encoders/qwen_3_06b_base.safetensors"
+    ],
+    "vae": [
+      "https://huggingface.co/circlestone-labs/Anima/resolve/main/split_files/vae/qwen_image_vae.safetensors"
+    ]
+  },
+  "custom_nodes": [
+    "https://github.com/asagi4/comfyui-prompt-control",
+    "https://github.com/newtextdoc1111/ComfyUI-Autocomplete-Plus"
+  ]
+}

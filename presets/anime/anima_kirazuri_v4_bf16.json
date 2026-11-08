@@ -1,9 +1,21 @@
 {
   "id": "anima-kirazuri-v4-bf16",
-  "title": "🌸 Anima Kirazuri v4 - Anime (BF16 Full Quality)",
-  "category": "Anime",
-  "description": "Kirazuri Anima v4 BF16 nativo (3.89 GB) + Qwen 3 0.6B Base + Qwen Image VAE + Turbo LoRA + Prompt Control.",
-  "recommended_vram": "16GB+",
+  "family": "🌸 Anima (CircleStone Labs)",
+  "title": "Kirazuri Anima v4 (BF16 Full Quality)",
+  "version": "v4.0 BF16 Nativo",
+  "author": "motimalu",
+  "base_model": "Anima Base v1.0",
+  "source_url": "https://civitai.red/models/2495369/kirazuri-anima?modelVersionId=3112659",
+  "source_type": "Civitai (Finetune)",
+  "category": "Anime / Ilustración",
+  "recommended_vram": "16GB+ (A100 / L4 / V100)",
+  "description": "Versión en precisión completa BF16 de Kirazuri Anima v4 (3.89 GB). Entrega la mayor fidelidad de trazo, microdetalles en ojos/cabello y rango dinámico superior sin degradación de cuantización. Ideal para usuarios de Colab Pro con GPUs de 16GB o más.",
+  "parameters": {
+    "steps": "25 - 35",
+    "cfg": "5.0 - 7.0",
+    "sampler": "Euler / DPM++ 2M",
+    "scheduler": "Simple / Karras"
+  },
   "models": {
     "diffusion_models/anima": [
       "https://huggingface.co/motimalu/kirazuri-anima/resolve/main/split_files/diffusion_models/anima-kirazuri-v4.safetensors"

@@ -18,12 +18,21 @@ def main():
     presets = get_all_presets()
 
     if args.list:
-        print("\n📋 Catálogo de Presets Disponibles:")
-        for pid, p in presets.items():
-            source = "📁 Drive" if p.get("_source") == "drive" else "🌐 Oficial"
-            print(f"  • {pid} [{source}] - {p.get('title', pid)}")
-            if "description" in p:
-                print(f"    ↳ {p['description']}")
+        print("\n📋 Catálogo de Presets Disponibles (Organizado por Familias):")
+        from studio.presets_manager import get_presets_by_family
+        families = get_presets_by_family()
+        for fam, presets_in_fam in families.items():
+            print(f"\n📁 {fam}:")
+            for pid, p in presets_in_fam.items():
+                source = "📁 Drive" if p.get("_source") in ("drive", "drive_legacy") else "🌐 Oficial"
+                author = p.get("author", "Comunidad")
+                version = p.get("version", "v1.0")
+                src_url = p.get("source_url", "")
+                print(f"  • [{pid}] {p.get('title', pid)} | {version} ({author}) [{source}]")
+                if src_url:
+                    print(f"    🔗 Enlace: {src_url}")
+                if "description" in p:
+                    print(f"    📝 {p['description']}")
         return
 
     if args.purge:

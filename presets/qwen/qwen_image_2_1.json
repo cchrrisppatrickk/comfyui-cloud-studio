@@ -1,9 +1,21 @@
 {
   "id": "qwen-image-2-1",
-  "title": "⚡ Qwen-Image-2.1 (Full Setup)",
-  "category": "Qwen",
-  "description": "Workflow optimizado para Qwen-Image-2.1 (diffusion_models/qwen, text_encoders, VAE bf16, KJNodes y DeGrid).",
-  "recommended_vram": "12GB+",
+  "family": "⚡ Qwen-Image (Alibaba / Comfy-Org)",
+  "title": "Qwen-Image-2.1 (Int8 + Heretic W4A8 / T4 Safe)",
+  "version": "v2.1 Int8 Hybrid",
+  "author": "Comfy-Org & pottokao",
+  "base_model": "Qwen-Image-2.1",
+  "source_url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1",
+  "source_type": "Hugging Face",
+  "category": "Multimodal / Fotorealismo & Texto",
+  "recommended_vram": "12GB (T4 Safe / Colab Free)",
+  "description": "Setup optimizado para ejecutar el avanzado modelo Qwen-Image-2.1 en GPUs T4 de Google Colab. Integra el modelo de difusión cuantizado Int8 ConvRot con el text encoder ultraeficiente Heretic W4A8. Sobresale en la representación fiel de textos en imágenes, lógica espacial y realismo fotográfico.",
+  "parameters": {
+    "steps": "20 - 28",
+    "cfg": "3.5 - 5.0",
+    "sampler": "Euler",
+    "scheduler": "Normal"
+  },
   "models": {
     "diffusion_models/qwen": [
       "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/diffusion_models/qwen_image_2.1_int8_convrot.safetensors"

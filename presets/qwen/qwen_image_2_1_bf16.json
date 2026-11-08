@@ -1,0 +1,34 @@
+{
+  "id": "qwen-image-2-1-bf16",
+  "family": "⚡ Qwen-Image (Alibaba / Comfy-Org)",
+  "title": "Qwen-Image-2.1 (BF16 Oficial Full Quality)",
+  "version": "v2.1 BF16 Nativo",
+  "author": "Alibaba Cloud / Comfy-Org",
+  "base_model": "Qwen-Image-2.1",
+  "source_url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1",
+  "source_type": "Hugging Face (Oficial)",
+  "category": "Multimodal / Fotorealismo & Texto",
+  "recommended_vram": "24GB+ (A100 / L4 High RAM)",
+  "description": "Versión en precisión completa BF16 de Qwen-Image-2.1 (14.2 GB de peso en difusión). Entrega la mayor fidelidad de textura, composición cinematográfica y legibilidad tipográfica sin compresión de pesos. Recomendada para instancias A100 o con abundante VRAM.",
+  "parameters": {
+    "steps": "25 - 35",
+    "cfg": "4.0 - 5.5",
+    "sampler": "Euler",
+    "scheduler": "Normal"
+  },
+  "models": {
+    "diffusion_models/qwen": [
+      "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/diffusion_models/qwen_image_2.1_bf16.safetensors"
+    ],
+    "text_encoders": [
+      "https://huggingface.co/pottokao/Qwen-Image-2.1-Text-Encoder-Heretic-W4A8/resolve/main/qwen3vl_8b_w4a8_heretic.safetensors"
+    ],
+    "vae": [
+      "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/vae/qwen_image_2.1_vae_bf16.safetensors"
+    ]
+  },
+  "custom_nodes": [
+    "https://github.com/kijai/ComfyUI-KJNodes",
+    "https://github.com/lunaaispace-eng/ComfyUI-DeGrid"
+  ]
+}

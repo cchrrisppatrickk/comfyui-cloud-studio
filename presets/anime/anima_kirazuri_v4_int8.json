@@ -1,9 +1,21 @@
 {
   "id": "anima-kirazuri-v4-int8",
-  "title": "🌸 Anima Kirazuri v4 - Anime (Int8 / T4 Safe)",
-  "category": "Anime",
-  "description": "Kirazuri Anima v4 int8 cuantizado + Qwen 3 0.6B Base + Qwen Image VAE + Turbo LoRA + Prompt Control.",
-  "recommended_vram": "12GB (T4 Safe)",
+  "family": "🌸 Anima (CircleStone Labs)",
+  "title": "Kirazuri Anima v4 (Int8 / T4 Safe)",
+  "version": "v4.0 Int8 ConvRot",
+  "author": "motimalu",
+  "base_model": "Anima Base v1.0",
+  "source_url": "https://civitai.red/models/2495369/kirazuri-anima?modelVersionId=3112659",
+  "source_type": "Civitai (Finetune)",
+  "category": "Anime / Ilustración",
+  "recommended_vram": "12GB (T4 Safe / Colab Free)",
+  "description": "Kirazuri (Anima) es un finetune completo del modelo Anima Base v1.0 entrenado por motimalu en Civitai. Destaca por su altísima coherencia anatómica, líneas limpias y colores vibrantes en estilo anime moderno. Esta versión Int8 ConvRot está optimizada para ejecutarse sin problemas de memoria en la GPU NVIDIA T4 de Google Colab.",
+  "parameters": {
+    "steps": "20 - 30",
+    "cfg": "4.5 - 6.0",
+    "sampler": "Euler / DPM++ 2M",
+    "scheduler": "Simple / Karras"
+  },
   "models": {
     "diffusion_models/anima": [
       "https://huggingface.co/motimalu/kirazuri-anima/resolve/main/split_files/diffusion_models/anima-kirazuri-v4-int8-convrot.safetensors"

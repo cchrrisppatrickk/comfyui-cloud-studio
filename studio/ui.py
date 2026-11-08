@@ -4,15 +4,15 @@ from IPython.display import display, HTML, clear_output
 
 from studio.config import WORKSPACE, DRIVE_WORKSPACE, TARGET_DIRS, get_colab_secret
 from studio.cleaner import purgar_residuos_y_sanar_cache, clean_url
-from studio.presets_manager import get_all_presets, save_custom_preset
+from studio.presets_manager import get_all_presets, get_presets_by_family, save_custom_preset
 from studio.downloader import download_file, download_node
 from studio.civitai import mask_url
 
 def render_downloader_ui(workspace=WORKSPACE):
     """
-    Renderiza la interfaz gráfica en Google Colab con ipywidgets.
-    Permite seleccionar presets oficiales o de Drive, pegar listas de LoRAs/modelos,
-    sanar caché y guardar nuevos presets.
+    Renderiza la consola interactiva en Google Colab con ipywidgets.
+    Incluye navegación por Familia/Versión, ficha técnica del modelo con enlaces directos
+    a Civitai/Hugging Face, descarga masiva de LoRAs y saneamiento de caché.
     """
     try:
         import ipywidgets as widgets
@@ -20,55 +20,162 @@ def render_downloader_ui(workspace=WORKSPACE):
         print("⚠️ Advertencia: 'ipywidgets' no está instalado. Ejecuta: !pip install ipywidgets")
         return
 
-    # 1. Recuperar credenciales automáticas si existen
+    # 1. Recuperar credenciales automáticas
     default_hf = get_colab_secret("HF_TOKEN")
     default_civitai = get_colab_secret("CIVITAI_API_KEY")
 
-    # 2. Cargar Catálogo de Presets
+    # 2. Cargar Catálogo agrupado por familias
     catalog = get_all_presets()
-    preset_keys = list(catalog.keys())
-    if not preset_keys:
-        preset_keys = ["(No se encontraron presets)"]
+    families_dict = get_presets_by_family()
+
+    family_options = ["(Todas las Familias)"] + list(families_dict.keys())
 
     # ==========================================
-    #  WIDGETS: PESTAÑA 1 - WORKFLOW PRESETS
+    #  PESTAÑA 1: SELECTORES Y FICHA DE MODELO
     # ==========================================
-    dropdown_options = [(catalog[k].get("title", k), k) for k in catalog]
-    preset_dropdown = widgets.Dropdown(
-        options=dropdown_options,
-        value=dropdown_options[0][1] if dropdown_options else None,
-        description="Preset:",
+    family_dropdown = widgets.Dropdown(
+        options=family_options,
+        value=family_options[0],
+        description="Familia:",
         layout=widgets.Layout(width="98%")
     )
 
-    preset_info_box = widgets.HTML(layout=widgets.Layout(width="98%", margin="5px 0 10px 0"))
+    preset_dropdown = widgets.Dropdown(
+        options=[],
+        description="Versión:",
+        layout=widgets.Layout(width="98%")
+    )
 
-    def update_preset_info(change=None):
+    preset_info_box = widgets.HTML(layout=widgets.Layout(width="98%", margin="8px 0"))
+
+    def get_filtered_presets(selected_family):
+        if selected_family == "(Todas las Familias)":
+            return catalog
+        return families_dict.get(selected_family, {})
+
+    def update_version_dropdown(change=None):
+        fam = family_dropdown.value
+        filtered = get_filtered_presets(fam)
+        options = []
+        for pid, p in filtered.items():
+            author = p.get("author", "Comunidad")
+            version = p.get("version", "")
+            title = p.get("title", pid)
+            display_label = f"{title} [{version} por {author}]"
+            options.append((display_label, pid))
+
+        preset_dropdown.options = options
+        if options:
+            preset_dropdown.value = options[0][1]
+        else:
+            preset_dropdown.value = None
+        update_preset_card()
+
+    def update_preset_card(change=None):
         pid = preset_dropdown.value
-        if pid in catalog:
-            p = catalog[pid]
-            desc = p.get("description", "Sin descripción")
-            vram = p.get("recommended_vram", "Estándar")
-            source = "📁 Drive" if p.get("_source") in ("drive", "drive_legacy") else "🌐 Oficial"
-            num_models = sum(len(v) for v in p.get("models", {}).values())
-            num_nodes = len(p.get("custom_nodes", []))
+        if not pid or pid not in catalog:
+            preset_info_box.value = ""
+            return
 
-            preset_info_box.value = f"""
-            <div style="background:#1e293b; color:#f8fafc; padding:10px 14px; border-radius:6px; font-size:13px; border-left:4px solid #3b82f6;">
-                <b>{p.get('title', pid)}</b> &nbsp;<span style="background:#0f172a; padding:2px 8px; border-radius:4px; font-size:11px;">{source}</span><br>
-                <div style="color:#94a3b8; margin:4px 0;">{desc}</div>
-                <div style="font-size:12px; margin-top:4px;">
-                    ⚡ <b>VRAM Recomendada:</b> <span style="color:#38bdf8;">{vram}</span> |
-                    📦 <b>Modelos:</b> {num_models} |
-                    🧩 <b>Nodos:</b> {num_nodes}
-                </div>
+        p = catalog[pid]
+        title = p.get("title", pid)
+        family = p.get("family", "General")
+        version = p.get("version", "v1.0")
+        author = p.get("author", "Comunidad")
+        base_model = p.get("base_model", "N/A")
+        desc = p.get("description", "Sin descripción detallada.")
+        vram = p.get("recommended_vram", "Estándar (12GB+)")
+        source_url = p.get("source_url", "")
+        source_type = p.get("source_type", "Civitai / Hugging Face")
+        params = p.get("parameters", {})
+        models = p.get("models", {})
+        nodes = p.get("custom_nodes", [])
+
+        # Estilo de badge de VRAM
+        is_t4_safe = "T4" in vram or "12GB" in vram or "Baja" in vram
+        vram_badge_color = "#15803d" if is_t4_safe else "#b45309"
+        vram_icon = "⚡" if is_t4_safe else "🔥"
+
+        # Badge de origen (Civitai vs Hugging Face)
+        is_civitai = "civitai" in source_type.lower() or "civitai" in source_url.lower()
+        source_badge_color = "#0284c7" if is_civitai else "#d97706"
+
+        # Enlace HTML
+        link_html = ""
+        if source_url:
+            link_html = f"""
+            <a href="{source_url}" target="_blank" style="display:inline-block; background:{source_badge_color}; color:#ffffff; padding:4px 10px; border-radius:4px; text-decoration:none; font-size:12px; font-weight:600; margin-left:8px;">
+                🔗 Ver en {source_type}
+            </a>
+            """
+
+        # Parámetros recomendados HTML
+        params_html = ""
+        if params:
+            chips = []
+            for k, val in params.items():
+                chips.append(f"<span style='background:#334155; padding:2px 8px; border-radius:4px; margin-right:6px;'><b>{k.upper()}:</b> {val}</span>")
+            params_html = f"""
+            <div style="margin-top:8px; font-size:12px; color:#cbd5e1;">
+                ⚙️ <b>Configuración Recomendada:</b> {' '.join(chips)}
             </div>
             """
-        else:
-            preset_info_box.value = ""
 
-    preset_dropdown.observe(update_preset_info, names="value")
-    update_preset_info()
+        # Desglose de archivos a descargar
+        files_breakdown = []
+        for cat, urls in models.items():
+            for u in urls:
+                clean_name = u.split("/")[-1].split("?")[0]
+                files_breakdown.append(f"<li><span style='color:#93c5fd;'>[{cat}]</span> {clean_name}</li>")
+        for nu in nodes:
+            node_name = nu.rstrip("/").split("/")[-1]
+            files_breakdown.append(f"<li><span style='color:#86efac;'>[custom_node]</span> {node_name}</li>")
+
+        breakdown_html = f"""
+        <details style="margin-top:8px; font-size:12px; color:#94a3b8; cursor:pointer;">
+            <summary style="font-weight:600; color:#cbd5e1;">📦 Ver desglose de componentes ({len(files_breakdown)} elementos)</summary>
+            <ul style="margin:4px 0 0 16px; padding:0; line-height:1.5;">
+                {''.join(files_breakdown)}
+            </ul>
+        </details>
+        """
+
+        # Render completo de la tarjeta
+        preset_info_box.value = f"""
+        <div style="background:#0f172a; color:#f8fafc; padding:14px 16px; border-radius:8px; font-size:13px; border:1px solid #1e293b; border-left:5px solid #3b82f6; box-shadow:0 4px 6px -1px rgba(0,0,0,0.3);">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
+                <div>
+                    <span style="font-size:16px; font-weight:700; color:#ffffff;">{title}</span>
+                    <span style="background:#1e293b; color:#94a3b8; padding:2px 8px; border-radius:4px; font-size:11px; margin-left:6px;">{version}</span>
+                </div>
+                <div>
+                    <span style="background:{vram_badge_color}; color:#ffffff; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:600;">
+                        {vram_icon} {vram}
+                    </span>
+                    {link_html}
+                </div>
+            </div>
+
+            <div style="color:#94a3b8; font-size:12px; margin:6px 0 8px 0;">
+                👤 <b>Autor/Entrenador:</b> <span style="color:#e2e8f0;">{author}</span> &nbsp;|&nbsp;
+                🧬 <b>Modelo Base:</b> <span style="color:#e2e8f0;">{base_model}</span> &nbsp;|&nbsp;
+                📁 <b>Familia:</b> <span style="color:#e2e8f0;">{family}</span>
+            </div>
+
+            <div style="background:#1e293b; color:#e2e8f0; padding:10px 12px; border-radius:6px; line-height:1.45; font-size:12.5px; margin:6px 0;">
+                {desc}
+            </div>
+
+            {params_html}
+            {breakdown_html}
+        </div>
+        """
+
+        if pid in catalog:
+            btn_download_preset.description = f"⚡ Descargar e Instalar {catalog[pid].get('title', pid)}"
+
+    family_dropdown.observe(update_version_dropdown, names="value")
+    preset_dropdown.observe(update_preset_card, names="value")
 
     chk_autopurge = widgets.Checkbox(
         value=True,
@@ -84,30 +191,35 @@ def render_downloader_ui(workspace=WORKSPACE):
     )
 
     tab_preset_box = widgets.VBox([
-        widgets.HTML("<b>Selecciona un Workflow Preset optimizado:</b>"),
+        widgets.HTML("<b>1. Selecciona el Modelo General o Familia:</b>"),
+        family_dropdown,
+        widgets.HTML("<b style='margin-top:6px;'>2. Selecciona la Versión / Variante de la Comunidad:</b>"),
         preset_dropdown,
         preset_info_box,
         chk_autopurge,
         btn_download_preset
     ])
 
+    # Inicializar selectores
+    update_version_dropdown()
+
     # ==========================================
-    #  WIDGETS: PESTAÑA 2 - DESCARGAS MANUALES / LORAS
+    #  PESTAÑA 2: DESCARGAS MANUALES / LORAS
     # ==========================================
     txt_loras = widgets.Textarea(
-        placeholder="Pega aquí URLs de LoRAs (Hugging Face / Civitai), una por línea o separadas por comas...",
+        placeholder="Pega aquí URLs de LoRAs (Hugging Face o Civitai), una por línea o separadas por comas...",
         description="LoRAs:",
         layout=widgets.Layout(width="98%", height="110px")
     )
 
     txt_checkpoints = widgets.Textarea(
-        placeholder="URLs de Checkpoints / Modelos completos...",
+        placeholder="URLs de Checkpoints completos (Civitai / HF)...",
         description="Checkpoints:",
         layout=widgets.Layout(width="98%", height="70px")
     )
 
     txt_diffusion = widgets.Textarea(
-        placeholder="URLs de Diffusion Models (UNET / Flux / Qwen / etc.)...",
+        placeholder="URLs de Diffusion Models (UNET / Flux / Qwen / Anima)...",
         description="Diffusion:",
         layout=widgets.Layout(width="98%", height="70px")
     )
@@ -119,7 +231,7 @@ def render_downloader_ui(workspace=WORKSPACE):
     )
 
     txt_nodes = widgets.Textarea(
-        placeholder="URLs de repositorios Git de Custom Nodes...",
+        placeholder="URLs de repositorios Git de Custom Nodes (ej. https://github.com/kijai/ComfyUI-KJNodes)...",
         description="Nodos Git:",
         layout=widgets.Layout(width="98%", height="70px")
     )
@@ -132,7 +244,7 @@ def render_downloader_ui(workspace=WORKSPACE):
     )
 
     tab_manual_box = widgets.VBox([
-        widgets.HTML("<b>Instalación por URLs Manuales o por Lotes:</b>"),
+        widgets.HTML("<b>Instalación por URLs Manuales o por Lotes (soporta múltiples LoRAs):</b>"),
         txt_loras,
         txt_checkpoints,
         txt_diffusion,
@@ -142,20 +254,35 @@ def render_downloader_ui(workspace=WORKSPACE):
     ])
 
     # ==========================================
-    #  WIDGETS: PESTAÑA 3 - GUARDAR PRESET / CREDS
+    #  PESTAÑA 3: GUARDAR PRESET / CREDS
     # ==========================================
     txt_preset_name = widgets.Text(
-        placeholder="Ej: Mi_Setup_Flux_Anime",
-        description="Nombre ID:",
+        placeholder="Ej: mi_setup_flux_anime",
+        description="ID Preset:",
         layout=widgets.Layout(width="98%")
     )
     txt_preset_title = widgets.Text(
-        placeholder="Ej: 🎨 Mi Setup Favorito Flux Anime",
+        placeholder="Ej: 🎨 Mi Finetune Favorito Anime",
         description="Título:",
         layout=widgets.Layout(width="98%")
     )
+    txt_preset_family = widgets.Text(
+        placeholder="Ej: 🌸 Anima, ⚡ Qwen o Flux",
+        description="Familia:",
+        layout=widgets.Layout(width="98%")
+    )
+    txt_preset_author = widgets.Text(
+        placeholder="Tu nombre o creador del modelo en Civitai",
+        description="Autor:",
+        layout=widgets.Layout(width="98%")
+    )
+    txt_preset_url = widgets.Text(
+        placeholder="https://civitai.com/models/...",
+        description="Enlace Fuente:",
+        layout=widgets.Layout(width="98%")
+    )
     txt_preset_desc = widgets.Text(
-        placeholder="Descripción breve de los componentes del workflow...",
+        placeholder="Descripción breve del estilo y recomendaciones...",
         description="Descripción:",
         layout=widgets.Layout(width="98%")
     )
@@ -192,6 +319,9 @@ def render_downloader_ui(workspace=WORKSPACE):
         widgets.HTML("<b>Guardar los enlaces manuales actuales como nuevo Preset:</b>"),
         txt_preset_name,
         txt_preset_title,
+        txt_preset_family,
+        txt_preset_author,
+        txt_preset_url,
         txt_preset_desc,
         btn_save_preset,
         widgets.HTML("<hr><b>Credenciales de API (Opcionales):</b>"),
@@ -205,7 +335,7 @@ def render_downloader_ui(workspace=WORKSPACE):
     #  PESTAÑAS PRINCIPALES Y SALIDA DE LOGS
     # ==========================================
     tabs = widgets.Tab(children=[tab_preset_box, tab_manual_box, tab_tools_box])
-    tabs.set_title(0, "⚡ Presets Oficiales")
+    tabs.set_title(0, "⚡ Presets & Modelos")
     tabs.set_title(1, "📦 Descargas & LoRAs")
     tabs.set_title(2, "⚙️ Herramientas & Tokens")
 
@@ -274,7 +404,7 @@ def render_downloader_ui(workspace=WORKSPACE):
 
     def on_click_preset(_):
         pid = preset_dropdown.value
-        if pid not in catalog:
+        if not pid or pid not in catalog:
             with out_panel:
                 print("❌ Por favor selecciona un preset válido.")
             return
@@ -310,7 +440,7 @@ def render_downloader_ui(workspace=WORKSPACE):
         name = txt_preset_name.value.strip()
         if not name:
             with out_panel:
-                print("❌ Debes ingresar un nombre o ID para el nuevo preset.")
+                print("❌ Debes ingresar un ID para el nuevo preset.")
             return
 
         models = {
@@ -328,7 +458,10 @@ def render_downloader_ui(workspace=WORKSPACE):
                 title=txt_preset_title.value.strip() or name,
                 description=txt_preset_desc.value.strip(),
                 models_dict=models,
-                custom_nodes_list=nodes
+                custom_nodes_list=nodes,
+                family=txt_preset_family.value.strip() or "Personalizados",
+                author=txt_preset_author.value.strip() or "Usuario",
+                source_url=txt_preset_url.value.strip()
             )
             print(f"✨ Preset guardado exitosamente. Recarga la celda para verlo en la lista.")
 
@@ -342,15 +475,15 @@ def render_downloader_ui(workspace=WORKSPACE):
     btn_save_preset.on_click(on_click_save_preset)
     btn_purge_cache.on_click(on_click_purge)
 
-    # Encabezado visual
+    # Encabezado visual profesional
     display(HTML('''
-    <div style="background: linear-gradient(90deg, #1e3a8a 0%, #312e81 100%); color: #fff; padding: 14px 18px; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin-bottom: 12px;">
+    <div style="background: linear-gradient(90deg, #1e3a8a 0%, #312e81 100%); color: #fff; padding: 14px 18px; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin-bottom: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
                 <b style="font-size: 16px; letter-spacing: 0.5px;">⚡ ComfyUI Cloud Studio - Smart Presets & Downloader</b>
-                <div style="font-size: 12px; color: #93c5fd; margin-top: 2px;">Gestor modular de modelos, LoRAs y nodos para Google Colab</div>
+                <div style="font-size: 12px; color: #93c5fd; margin-top: 2px;">Navegación jerárquica de modelos, variantes de Civitai y aprovisionamiento multihilo</div>
             </div>
-            <div style="background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 4px; font-size: 11px;">v2.5 Modular</div>
+            <div style="background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 4px; font-size: 11px;">v2.6 Pro Edition</div>
         </div>
     </div>
     '''))
