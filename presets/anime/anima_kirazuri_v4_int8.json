@@ -1,0 +1,25 @@
+{
+  "id": "anima-kirazuri-v4-int8",
+  "title": "🌸 Anima Kirazuri v4 - Anime (Int8 / T4 Safe)",
+  "category": "Anime",
+  "description": "Kirazuri Anima v4 int8 cuantizado + Qwen 3 0.6B Base + Qwen Image VAE + Turbo LoRA + Prompt Control.",
+  "recommended_vram": "12GB (T4 Safe)",
+  "models": {
+    "diffusion_models/anima": [
+      "https://huggingface.co/motimalu/kirazuri-anima/resolve/main/split_files/diffusion_models/anima-kirazuri-v4-int8-convrot.safetensors"
+    ],
+    "text_encoders": [
+      "https://huggingface.co/circlestone-labs/Anima/resolve/main/split_files/text_encoders/qwen_3_06b_base.safetensors"
+    ],
+    "vae": [
+      "https://huggingface.co/circlestone-labs/Anima/resolve/main/split_files/vae/qwen_image_vae.safetensors"
+    ],
+    "loras": [
+      "https://huggingface.co/motimalu/kirazuri-anima/resolve/main/split_files/diffusion_models/kirazuri-anima-turbo-v4.safetensors"
+    ]
+  },
+  "custom_nodes": [
+    "https://github.com/asagi4/comfyui-prompt-control",
+    "https://github.com/newtextdoc1111/ComfyUI-Autocomplete-Plus"
+  ]
+}

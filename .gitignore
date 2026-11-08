@@ -1,0 +1,21 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Checkpoints
+.ipynb_checkpoints/
+
+# Archivos de caché y logs locales
+.download_manifest.json*
+.download_queue.json*
+*.tmp
+*.aria2
+
+# Entornos virtuales
+.venv/
+env/
+venv/
+
+# Sistema
+.DS_Store
+Thumbs.db

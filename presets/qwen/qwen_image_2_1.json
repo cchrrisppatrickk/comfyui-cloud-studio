@@ -1,0 +1,22 @@
+{
+  "id": "qwen-image-2-1",
+  "title": "⚡ Qwen-Image-2.1 (Full Setup)",
+  "category": "Qwen",
+  "description": "Workflow optimizado para Qwen-Image-2.1 (diffusion_models/qwen, text_encoders, VAE bf16, KJNodes y DeGrid).",
+  "recommended_vram": "12GB+",
+  "models": {
+    "diffusion_models/qwen": [
+      "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/diffusion_models/qwen_image_2.1_int8_convrot.safetensors"
+    ],
+    "text_encoders": [
+      "https://huggingface.co/pottokao/Qwen-Image-2.1-Text-Encoder-Heretic-W4A8/resolve/main/qwen3vl_8b_w4a8_heretic.safetensors"
+    ],
+    "vae": [
+      "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/vae/qwen_image_2.1_vae_bf16.safetensors"
+    ]
+  },
+  "custom_nodes": [
+    "https://github.com/kijai/ComfyUI-KJNodes",
+    "https://github.com/lunaaispace-eng/ComfyUI-DeGrid"
+  ]
+}
