@@ -11,12 +11,16 @@ def mask_url(url):
     return re.sub(r'([?&]token=)[^&]+', r'\1***', url or "")
 
 def normalize_url_key(url):
-    """Genera una clave única normalizada para el manifiesto."""
+    """Genera una clave única normalizada para el manifiesto diferenciando por archivo/tipo."""
     u = re.sub(r'[?&]token=[^&]+', '', url or "").rstrip('?&')
     m = re.search(r'civitai\.(?:com|red)/api/download/models/(\d+)', u)
     if m:
-        fm = re.search(r'fileId=(\d+)', u)
-        return f"civitai:{m.group(1)}:{fm.group(1) if fm else 'default'}"
+        parsed = urllib.parse.urlparse(u)
+        qs = urllib.parse.parse_qs(parsed.query)
+        fid = qs.get('fileId', [None])[0]
+        ftype = qs.get('type', [None])[0]
+        sub = f"file:{fid}" if fid else (f"type:{ftype}" if ftype else "primary")
+        return f"civitai:{m.group(1)}:{sub}"
     return u
 
 def parse_civitai_target(url, civitai_key=""):
@@ -71,8 +75,11 @@ def extract_filename_from_headers(headers, final_url):
     path = urllib.parse.urlparse(final_url).path
     return os.path.basename(path) or None
 
-def filename_from_civitai_api(version_id, civitai_key=""):
-    """Consulta la API de Civitai para obtener el nombre oficial del archivo primario."""
+def filename_from_civitai_api(version_id, file_id=None, file_type=None, civitai_key=""):
+    """
+    Consulta la API de Civitai para obtener el nombre oficial del archivo específico
+    (coincidiendo por fileId, tipo o el archivo primario por defecto).
+    """
     if not version_id:
         return None
     try:
@@ -83,6 +90,19 @@ def filename_from_civitai_api(version_id, civitai_key=""):
         if r.status_code == 200:
             files = r.json().get('files', [])
             if files:
+                # 1. Búsqueda exacta por fileId
+                if file_id:
+                    matched = next((f for f in files if str(f.get('id')) == str(file_id)), None)
+                    if matched and matched.get('name'):
+                        return matched.get('name')
+
+                # 2. Búsqueda por tipo (ej. VAE, Text Encoder)
+                if file_type:
+                    matched = next((f for f in files if f.get('type', '').lower() == str(file_type).lower()), None)
+                    if matched and matched.get('name'):
+                        return matched.get('name')
+
+                # 3. Fallback al primario
                 primary = next((f for f in files if f.get('primary')), files[0])
                 name = primary.get('name')
                 if name:
@@ -94,18 +114,23 @@ def filename_from_civitai_api(version_id, civitai_key=""):
 def resolve_filename(url, civitai_ver_id=None, civitai_key="", hf_token=""):
     """
     Determina de manera robusta el nombre de archivo a través de:
-    1. API de Civitai (si aplica)
+    1. Parámetros de Civitai (fileId, type) en la API
     2. URL limpia
-    3. Solicitud HEAD HTTP
-    4. GET Stream parcial
+    3. Solicitud HEAD / GET Stream (Content-Disposition del servidor)
     """
+    # Extraer parámetros de consulta específicos si existen en la URL
+    parsed = urllib.parse.urlparse(url)
+    qs = urllib.parse.parse_qs(parsed.query)
+    file_id = qs.get('fileId', [None])[0]
+    file_type = qs.get('type', [None])[0]
+
     if civitai_ver_id:
-        fn = filename_from_civitai_api(civitai_ver_id, civitai_key)
+        fn = filename_from_civitai_api(civitai_ver_id, file_id=file_id, file_type=file_type, civitai_key=civitai_key)
         if fn and any(fn.lower().endswith(ext) for ext in VALID_EXTENSIONS):
             print(f"      ✅ Nombre resuelto vía Civitai API: {fn}")
             return fn
 
-    path = urllib.parse.urlparse(url).path
+    path = parsed.path
     base = os.path.basename(path)
     if base and any(base.lower().endswith(ext) for ext in VALID_EXTENSIONS):
         fn = urllib.parse.unquote(base)

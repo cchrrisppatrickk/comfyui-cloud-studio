@@ -2,29 +2,29 @@
   "id": "anima-base-v1",
   "family": "🌸 Anima (CircleStone Labs)",
   "title": "Anima Base v1.0 (Modelo Oficial / Base Original)",
-  "version": "v1.0 Base Oficial",
-  "author": "CircleStone Labs",
+  "version": "base-v1.0 Oficial [ID: 2945208]",
+  "author": "circlestone_labs",
   "base_model": "Anima Base v1.0",
-  "source_url": "https://huggingface.co/circlestone-labs/Anima",
-  "source_type": "Hugging Face (Oficial)",
+  "source_url": "https://civitai.red/models/2458426/anima?modelVersionId=2945208",
+  "source_type": "Civitai Oficial",
   "category": "Anime / Foundation Model",
   "recommended_vram": "16GB+ (BF16 Nativo)",
-  "description": "El modelo base oficial de Anima v1.0 desarrollado por CircleStone Labs (4.18 GB). Es la arquitectura fundacional de la que derivan modelos afinados como Kirazuri. Proporciona una base sumamente versátil para generación de arte anime y manga sin sesgos de finetuning agresivo.",
+  "description": "Modelo base original completamente entrenado por CircleStone Labs (3.89 GB). Es el fundamento sobre el que se construyen todas las variantes de Anima (Aesthetic, Turbo y finetunes como Kirazuri). Ofrece gran fidelidad y consistencia en ilustración anime y manga.",
   "parameters": {
     "steps": "25 - 35",
     "cfg": "5.0 - 6.5",
-    "sampler": "Euler",
-    "scheduler": "Simple"
+    "sampler": "Euler / DPM++ 2M",
+    "scheduler": "Simple / Karras"
   },
   "models": {
     "diffusion_models/anima": [
-      "https://huggingface.co/circlestone-labs/Anima/resolve/main/split_files/diffusion_models/anima-base-v1.0.safetensors"
+      "https://civitai.com/api/download/models/2945208?fileId=2824391"
     ],
     "text_encoders": [
-      "https://huggingface.co/circlestone-labs/Anima/resolve/main/split_files/text_encoders/qwen_3_06b_base.safetensors"
+      "https://civitai.com/api/download/models/2945208?fileId=2824387"
     ],
     "vae": [
-      "https://huggingface.co/circlestone-labs/Anima/resolve/main/split_files/vae/qwen_image_vae.safetensors"
+      "https://civitai.com/api/download/models/2945208?type=VAE&format=SafeTensor&size=pruned&fp=fp8"
     ]
   },
   "custom_nodes": [
